@@ -18,14 +18,16 @@ Adafruit/Seeed PN532 libraries, and so on.
   no commands for these, so the bridge adds a few of its own (see
   [docs/protocol.md](docs/protocol.md)).
 
-> **Status:** not yet run on real hardware. The emulator passes its
-> native tests ([test/native](test/native)). zmod_nfc's unmodified PN532
-> reader, connected through a pseudo-terminal, opened the bridge, read a
-> mock NTAG215 and decoded its OpenSpool record. All five board builds
-> compile. The RC522/PN5180 drivers come from
+> **Status:** the PN532 on I2C works on hardware: on an ESP32-C3 on
+> Windows (COM port, no driver), auto-detection found the PN532. zmod_nfc's
+> PN532 reader then read an NTAG216 through the bridge (256 bytes in
+> 0.8 s) and decoded its OpenSpool record. The RC522 and PN5180 emulation
+> has not been run on hardware yet. It passes the native tests
+> ([test/native](test/native)), and zmod_nfc read and decoded a mock tag
+> through it over a pseudo-terminal. Its drivers come from
 > [zmod_esp32-nfc](https://github.com/DIEHARDave/zmod_esp32-nfc), where
-> the PN532 driver works on hardware; the RC522 and PN5180 drivers have
-> not been run on hardware there either.
+> they have not been run on hardware either. All five board builds
+> compile.
 
 ## Drivers by board
 
@@ -92,8 +94,25 @@ After that, `pio run -t upload` resets it itself. The C6 env uses the
 pioarduino platform (Arduino core 3), which PlatformIO downloads the first
 time.
 
+One ESP32-C3 (revision v0.4, embedded XMC flash) would not take an upload
+from the esptool 4.5.1 that platform 6.9.0 uses: "Unable to verify flash
+chip connection" right after the stub started. Flashing without the stub
+works, more slowly (about 25 s):
+
+```sh
+B=.pio/build/esp32-c3
+python ~/.platformio/packages/tool-esptoolpy/esptool.py --chip esp32c3 --port COM7 \
+  --no-stub write_flash 0x0 $B/bootloader.bin 0x8000 $B/partitions.bin \
+  0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
+  0x10000 $B/firmware.bin
+```
+
 The serial port carries only PN532 frames, so the firmware prints nothing
 to it.
+
+The PN532 module's range is short (2-4 cm, less through a spool or near
+metal): a tag at the edge of its range shows up only now and then, and
+reads stop part way. Lay tags flat on the antenna side of the board.
 
 ## Use
 
