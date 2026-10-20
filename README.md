@@ -121,7 +121,7 @@ Point the software at the serial port as you would for a PN532 on UART at
 
 | Software | Setting |
 |---|---|
-| zmod_nfc | `reader: auto` or `reader: pn532` (finds `303A` and CP210x/CH340 ports itself), or `device: /dev/ttyACM0` |
+| [zmod_nfc](https://github.com/DIEHARDave/zmod_nfc#usb-bridge-for-pn532-rc522-and-pn5180) (Zmod printers) | `reader: auto` or `reader: pn532` (finds `303A` and CP210x/CH340 ports itself), or `device: /dev/ttyACM0` |
 | libnfc | `device.connstring = "pn532_uart:/dev/ttyACM0"` (Windows: `pn532_uart:COM6`) |
 | nfcpy | `tty:ACM0:pn532` (Linux), `tty:usbmodem1101:pn532` (macOS), `com:COM6:pn532` (Windows) |
 | Adafruit_PN532 / PN532 (Seeed) | the HSU/UART constructor on that port |
