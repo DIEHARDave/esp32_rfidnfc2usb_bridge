@@ -1,0 +1,85 @@
+#include "backend.h"
+
+namespace {
+
+// How often a missing chip is looked for again. A probe stops the host link
+// for up to about half a second, so not too often.
+constexpr uint32_t RETRY_MS = 5000;
+constexpr int MAX_FAILURES = 5;
+// Per command while probing for a PN532 on UART that may not be there.
+constexpr uint32_t PROBE_TIMEOUT_MS = 100;
+
+}  // namespace
+
+void Backend::begin(const Config &config) {
+    config_ = config;
+    detect();
+}
+
+bool Backend::tryChip(ChipSetting chip, bool probing) {
+    chip_ = nullptr;
+    switch (chip) {
+    case ChipSetting::Pn532I2C:
+        if (config_.sda < 0 || config_.scl < 0) return false;
+        pn532_.attachI2C(Wire, config_.sda, config_.scl);
+        if ((!probing || pn532_.present()) && pn532_.init()) chip_ = &pn532_;
+        else pn532_.end();
+        break;
+    case ChipSetting::Pn532Uart:
+        if (config_.rx < 0 || config_.tx < 0) return false;
+        pn532_.attachUart(Serial1, config_.rx, config_.tx);
+        if (pn532_.init(probing ? PROBE_TIMEOUT_MS : 500)) chip_ = &pn532_;
+        else pn532_.end();
+        break;
+    case ChipSetting::Rc522:
+        if (config_.sck < 0 || config_.miso < 0 || config_.mosi < 0 || config_.ss < 0) return false;
+        rc522_.attach(SPI, config_.sck, config_.miso, config_.mosi, config_.ss, config_.rst);
+        if (rc522_.init()) chip_ = &rc522_;
+        else rc522_.end();
+        break;
+    case ChipSetting::Pn5180:
+        if (config_.sck < 0 || config_.miso < 0 || config_.mosi < 0 || config_.ss < 0 || config_.busy < 0)
+            return false;
+        pn5180_.attach(SPI, config_.sck, config_.miso, config_.mosi, config_.ss, config_.busy, config_.rst);
+        if (pn5180_.init()) chip_ = &pn5180_;
+        else pn5180_.end();
+        break;
+    case ChipSetting::Auto:
+        break;
+    }
+    if (chip_) found_ = chip;
+    return chip_ != nullptr;
+}
+
+bool Backend::detect() {
+    nextTry_ = millis() + RETRY_MS;
+    if (config_.chip != ChipSetting::Auto) return tryChip(config_.chip, false);
+    // The chip found last first, then the rest. The PN5180 goes before the
+    // RC522: the RC522 probe's register writes mean nothing to a PN5180,
+    // while the PN5180 probe fails fast on an RC522 (no BUSY).
+    const ChipSetting order[] = {ChipSetting::Pn532I2C, ChipSetting::Pn532Uart, ChipSetting::Pn5180,
+                                 ChipSetting::Rc522};
+    if (found_ != ChipSetting::Auto && tryChip(found_, true)) return true;
+    for (ChipSetting chip : order)
+        if (chip != found_ && tryChip(chip, true)) return true;
+    return false;
+}
+
+void Backend::service() {
+    if (chip_ && chip_->ready() && chip_->failures() < MAX_FAILURES) return;
+    if (chip_ && chip_->ready()) {
+        // Stopped answering: start it again at once.
+        chip_->end();
+        detect();
+        return;
+    }
+    if ((int32_t)(millis() - nextTry_) >= 0) detect();
+}
+
+String Backend::describe() const {
+    if (!chip_ || !chip_->ready()) {
+        if (config_.chip == ChipSetting::Auto) return "no reader found";
+        return String("no ") + chipSettingName(config_.chip) + " answering";
+    }
+    return String(chip_->chipName()) + " v" + chip_->firmware() + " (" + chip_->busName() + ")";
+}

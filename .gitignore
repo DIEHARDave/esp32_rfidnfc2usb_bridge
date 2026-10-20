@@ -1,0 +1,6 @@
+.pio/
+.vscode/
+*.bin
+test/native/test
+test/native/sim
+__pycache__/
