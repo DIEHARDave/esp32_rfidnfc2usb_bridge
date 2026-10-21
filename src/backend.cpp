@@ -22,7 +22,10 @@ bool Backend::tryChip(ChipSetting chip, bool probing) {
     case ChipSetting::Pn532I2C:
         if (config_.sda < 0 || config_.scl < 0) return false;
         pn532_.attachI2C(Wire, config_.sda, config_.scl);
-        if ((!probing || pn532_.present()) && pn532_.init()) chip_ = &pn532_;
+        // With a line held low every transfer waits for its timeout (about
+        // a second each on the classic ESP32), stalling the host link.
+        stuck_ = pn532_.stuckLine();
+        if (!stuck_ && (!probing || pn532_.present()) && pn532_.init()) chip_ = &pn532_;
         else pn532_.end();
         break;
     case ChipSetting::Pn532Uart:
@@ -78,8 +81,15 @@ void Backend::service() {
 
 String Backend::describe() const {
     if (!chip_ || !chip_->ready()) {
-        if (config_.chip == ChipSetting::Auto) return "no reader found";
-        return String("no ") + chipSettingName(config_.chip) + " answering";
+        String text = config_.chip == ChipSetting::Auto
+                          ? String("no reader found")
+                          : String("no ") + chipSettingName(config_.chip) + " answering";
+        if (stuck_) {
+            int pin = strcmp(stuck_, "SCL") == 0 ? config_.scl : config_.sda;
+            text += String(" (I2C ") + stuck_ + ", GPIO " + String(pin) +
+                    ", is held low: check the wiring, or use the PN532 over UART)";
+        }
+        return text;
     }
     return String(chip_->chipName()) + " v" + chip_->firmware() + " (" + chip_->busName() + ")";
 }

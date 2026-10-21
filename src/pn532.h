@@ -25,6 +25,10 @@ public:
     // I2C: whether anything acknowledges the PN532's address (a quick check
     // before init). Always true on UART.
     bool present();
+    // I2C: "SDA" or "SCL" when that line stays low with the bus idle (after
+    // clocking out a device stuck mid-byte), else nullptr. Transfers on
+    // such a bus each hang until they time out.
+    const char *stuckLine();
     void end() override;
     bool ready() const override { return ok_; }
     const char *chipName() const override { return "PN532"; }
@@ -54,6 +58,7 @@ private:
 
     Pn532Bus bus_ = Pn532Bus::I2C;
     TwoWire *wire_ = nullptr;
+    int sda_ = -1, scl_ = -1;
     HardwareSerial *serial_ = nullptr;
     bool ok_ = false;
     int failures_ = 0;

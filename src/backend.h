@@ -31,4 +31,5 @@ private:
     NfcChip *chip_ = nullptr;
     ChipSetting found_ = ChipSetting::Auto;   // the chip in use (for auto)
     uint32_t nextTry_ = 0;
+    const char *stuck_ = nullptr;             // PN532 I2C line held low
 };
