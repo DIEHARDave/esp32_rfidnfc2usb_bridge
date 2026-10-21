@@ -76,6 +76,14 @@ the bridge finds whichever reader is wired. Every pin can be changed (see
 - **PN532** (red/blue "PN532 NFC V3" boards): I2C is switch 1 ON, 2 OFF; UART
   (HSU) is both OFF. Power from 3.3 V or 5 V (the board has a regulator).
   On UART, the PN532's TX goes to the ESP32's RX pin and RX to TX.
+  If the PN532 is not found on I2C, try UART: the I2C pins double as the
+  UART pins (SDA is TX, SCL is RX), so set both switches OFF, power the
+  PN532 off and on (it reads its switches only at power-up), and set the
+  UART RX/TX to the GPIOs SDA/SCL were on (or move the two wires to the
+  default UART pins). With [zmod_esp32-nfc](https://github.com/DIEHARDave/zmod_esp32-nfc),
+  two PN532 V3 boards held SCL low and were never found on I2C on an
+  Ideaspark "ESP32 OLED 0.96" (classic ESP32), and both worked over UART.
+  The PN532's SPI mode (switch 1 OFF, switch 2 ON) is not supported.
 - **RC522**: SPI only, **3.3 V only**. `IRQ` is not used. RST can be tied to
   3.3 V (set `rst` to -1).
 - **PN5180**: 5 V for the RF stage **and** 3.3 V for logic, both needed.
