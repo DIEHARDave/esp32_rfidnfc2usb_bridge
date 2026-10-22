@@ -25,7 +25,7 @@ Adafruit/Seeed PN532 libraries, and so on.
 > has not been run on hardware yet. It passes the native tests
 > ([test/native](test/native)), and zmod_nfc read and decoded a mock tag
 > through it over a pseudo-terminal. Its drivers come from
-> [zmod_esp32-nfc](https://github.com/DIEHARDave/zmod_esp32-nfc), where
+> [LaneTag](https://github.com/DIEHARDave/LaneTag), where
 > they have not been run on hardware either. All five board builds
 > compile.
 
@@ -80,7 +80,7 @@ the bridge finds whichever reader is wired. Every pin can be changed (see
   UART pins (SDA is TX, SCL is RX), so set both switches OFF, power the
   PN532 off and on (it reads its switches only at power-up), and set the
   UART RX/TX to the GPIOs SDA/SCL were on (or move the two wires to the
-  default UART pins). With [zmod_esp32-nfc](https://github.com/DIEHARDave/zmod_esp32-nfc),
+  default UART pins). With [LaneTag](https://github.com/DIEHARDave/LaneTag),
   two PN532 V3 boards held SCL low and were never found on I2C on an
   Ideaspark "ESP32 OLED 0.96" (classic ESP32), and both worked over UART.
   The PN532's SPI mode (switch 1 OFF, switch 2 ON) is not supported.
@@ -209,4 +209,4 @@ make sim && ./sim &          # the emulator on /tmp/bridge-pty for host software
 
 ## License
 
-GPL-3.0, as zmod_esp32-nfc, whose reader drivers this firmware uses.
+GPL-3.0, as LaneTag, whose reader drivers this firmware uses.

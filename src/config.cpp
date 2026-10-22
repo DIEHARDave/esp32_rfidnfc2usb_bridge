@@ -23,7 +23,7 @@ constexpr int LED = 15;
 constexpr bool LED_LOW = false;
 #elif CONFIG_IDF_TARGET_ESP32C3
 // ESP32-C3 SuperMini: the blue LED is on GPIO 8 (lit when low). I2C on 6/7
-// as in zmod_esp32-nfc; GPIO 2, 8 and 9 are strapping pins and stay free.
+// as in LaneTag; GPIO 2, 8 and 9 are strapping pins and stay free.
 constexpr int SDA = 6, SCL = 7, RX = 20, TX = 21;
 constexpr int SCK = 4, MISO = 5, MOSI = 3, SS = 1, RST = 0, BUSY = 10;
 constexpr int LED = 8;
